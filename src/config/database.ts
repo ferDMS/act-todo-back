@@ -10,18 +10,22 @@ const __dirname = dirname(__filename);
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
+if (!process.env.DB_NAME || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_HOST || !process.env.DB_PORT) {
+    throw new Error('Missing database configuration. Please check your .env file');
+}
+
 const sequelize = new Sequelize(
-    process.env.DB_NAME || 'defaultdb',
-    process.env.DB_USER || 'user',
-    process.env.DB_PASSWORD || 'password',
+    process.env.DB_NAME,
+    process.env.DB_USER,
+    process.env.DB_PASSWORD,
     {
-        host: process.env.DB_HOST || 'localhost',
-        port: parseInt(process.env.DB_PORT || '3306'),
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT),
         dialect: 'mysql',
         dialectOptions: {
             ssl: {
                 require: true,
-                rejectUnauthorized: false // Permite certificados autofirmados
+                rejectUnauthorized: false // Allows self-signed certificates
             }
         },
         logging: false // Set to console.log to see SQL queries
