@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express';
 import { connectDatabase } from './config/database.js';
 import cors from 'cors';
+import taskRoutes from './routes/taskRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -8,6 +9,9 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Routes
+app.use('/api/todos', taskRoutes);
 
 // Test route
 app.get('/', (req: Request, res: Response) => {

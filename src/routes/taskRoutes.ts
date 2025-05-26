@@ -1,16 +1,38 @@
 import { Router } from 'express';
-import TodoController from '../controllers/taskController';
+import type { RequestHandler } from 'express';
+import {
+    getAllTasks,
+    createTask,
+    updateTask,
+    toggleTaskStatus,
+    deleteTask
+} from '../controllers/taskController.js';
+
+interface TodoParams {
+    id: string;
+}
+
+interface TodoBody {
+    text: string;
+    priority?: 'low' | 'medium' | 'high';
+    completed?: boolean;
+}
 
 const router = Router();
 
-const setTodoRoutes = (app) => {
-    app.use('/api/todos', router);
+// Get all todos
+router.get('/', getAllTasks as RequestHandler);
 
-    router.get('/', TodoController.getTodos.bind(TodoController));
-    router.post('/', TodoController.addTodo.bind(TodoController));
-    router.put('/:id', TodoController.editTodo.bind(TodoController));
-    router.delete('/:id', TodoController.deleteTodo.bind(TodoController));
-    router.patch('/:id/complete', TodoController.completeTodo.bind(TodoController));
-};
+// Create a new todo
+router.post('/', createTask as RequestHandler<{}, any, TodoBody>);
 
-export default setTodoRoutes;
+// Update a todo
+router.put('/:id', updateTask as RequestHandler<TodoParams, any, TodoBody>);
+
+// Toggle todo completion status
+router.patch('/:id/toggle', toggleTaskStatus as RequestHandler<TodoParams>);
+
+// Delete a todo
+router.delete('/:id', deleteTask as RequestHandler<TodoParams>);
+
+export default router;

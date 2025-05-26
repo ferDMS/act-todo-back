@@ -1,93 +1,96 @@
 import { Request, Response } from 'express';
-import { TodoModel } from '../models/Task';
-import { Todo } from '../types';
+import Task from '../models/Task.js';
 
-// In-memory storage for todos (replace with database in production)
-let todos: Todo[] = [];
+interface TodoBody {
+    text: string;
+    priority?: 'low' | 'medium' | 'high';
+    completed?: boolean;
+}
 
-class TodoController {
-    async getTodos(req: Request, res: Response) {
-        try {
-            res.send(todos);
-        } catch (error) {
-            res.status(500).json({ message: 'Error retrieving todos', error });
-        }
+// Get all tasks
+export const getAllTasks = async (_req: Request, res: Response) => {
+    try {
+        const tasks = await Task.findAll();
+        res.json(tasks);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching tasks', error });
     }
+};
 
-    async addTodo(req: Request, res: Response) {
-        const { id, text, completed, priority, createdAt }: { id?: string; text: string; completed?: boolean; priority?: "low" | "medium" | "high"; createdAt?: string } = req.body;
+// Create a new task
+export const createTask = async (req: Request<{}, {}, TodoBody>, res: Response) => {
+    try {
+        const { text, priority = 'medium', completed = false } = req.body;
         
         if (!text) {
             return res.status(400).json({ message: 'Text is required' });
         }
 
-        const newTodo: Todo = {
-            id: id || Date.now().toString(), // Use provided ID or generate one
+        const task = await Task.create({
             text,
-            completed: completed || false,
-            priority: priority || 'medium',
-            createdAt: createdAt ? new Date(createdAt) : new Date()
-        };
-
-        try {
-            todos.push(newTodo);
-            res.status(201).send({ message: 'Todo created' });
-        } catch (error) {
-            res.status(500).json({ message: 'Error adding todo', error });
-        }
+            priority,
+            completed
+        });
+        
+        res.status(201).json(task);
+    } catch (error) {
+        res.status(400).json({ message: 'Error creating task', error });
     }
+};
 
-    async editTodo(req: Request, res: Response) {
+// Update a task
+export const updateTask = async (req: Request<{ id: string }, {}, TodoBody>, res: Response) => {
+    try {
         const { id } = req.params;
-        const { text, completed, priority }: Partial<Todo> = req.body;
-
-        try {
-            const todoIndex = todos.findIndex(todo => todo.id === id);
-            if (todoIndex === -1) {
-                return res.status(404).json({ message: 'Todo not found' });
-            }
-
-            // Update the todo with new values
-            if (text !== undefined) todos[todoIndex].text = text;
-            if (completed !== undefined) todos[todoIndex].completed = completed;
-            if (priority !== undefined) todos[todoIndex].priority = priority;
-            
-            res.send({ message: 'Todo updated' });
-        } catch (error) {
-            res.status(500).json({ message: 'Error editing todo', error });
+        const { text, priority, completed } = req.body;
+        
+        const task = await Task.findByPk(id);
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
         }
-    }
 
-    async deleteTodo(req: Request, res: Response) {
+        await task.update({ 
+            text: text || task.text,
+            priority: priority || task.priority,
+            completed: completed !== undefined ? completed : task.completed
+        });
+        
+        res.json(task);
+    } catch (error) {
+        res.status(400).json({ message: 'Error updating task', error });
+    }
+};
+
+// Toggle task completion status
+export const toggleTaskStatus = async (req: Request<{ id: string }>, res: Response) => {
+    try {
         const { id } = req.params;
-
-        try {
-            const todoIndex = todos.findIndex(todo => todo.id === id);
-            if (todoIndex === -1) {
-                return res.status(404).json({ message: 'Todo not found' });
-            }
-
-            todos.splice(todoIndex, 1);
-            res.send({ message: 'Todo deleted' });
-        } catch (error) {
-            res.status(500).json({ message: 'Error deleting todo', error });
+        const task = await Task.findByPk(id);
+        
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
         }
+
+        await task.update({ completed: !task.completed });
+        res.json(task);
+    } catch (error) {
+        res.status(400).json({ message: 'Error toggling task status', error });
     }
-    async completeTodo(req: Request, res: Response) {
+};
+
+// Delete a task
+export const deleteTask = async (req: Request<{ id: string }>, res: Response) => {
+    try {
         const { id } = req.params;
-
-        try {
-            const todoIndex = todos.findIndex(todo => todo.id === id);
-            if (todoIndex === -1) {
-                return res.status(404).json({ message: 'Todo not found' });
-            }
-
-            todos[todoIndex].completed = true;
-            res.status(200).json(todos[todoIndex]);
-        } catch (error) {
-            res.status(500).json({ message: 'Error completing todo', error });
+        const task = await Task.findByPk(id);
+        
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
         }
-    }
-}
 
-export default new TodoController();
+        await task.destroy();
+        res.json({ message: 'Task deleted successfully' });
+    } catch (error) {
+        res.status(400).json({ message: 'Error deleting task', error });
+    }
+};
