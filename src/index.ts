@@ -2,6 +2,10 @@ import express, { Request, Response } from 'express';
 import { connectDatabase } from './config/database.js';
 import cors from 'cors';
 import taskRoutes from './routes/taskRoutes.js';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +13,7 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/todos', taskRoutes);
@@ -21,6 +26,12 @@ app.get('/', (req: Request, res: Response) => {
 // Health check route
 app.get('/health', (req: Request, res: Response) => {
     res.json({ status: 'OK', timestamp: new Date() });
+});
+
+// Error handling middleware
+app.use((err: Error, req: Request, res: Response) => {
+    console.error(err.stack);
+    res.status(500).json({ message: 'Something went wrong!' });
 });
 
 // Start server
