@@ -1,17 +1,32 @@
-import { Sequelize } from 'sequelize'; 
+import { Sequelize } from 'sequelize';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
 
-const sequelize = new Sequelize('defaultdb', 'avnadmin', 'AVNS_Nom2k4h3t0k7W0LPoj-', {
-    host: 'mysql-336e5ff8-tec-39e5.h.aivencloud.com',
-    port: 22073,
-    dialect: 'mysql',
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: true
-        }
-    },
-    logging: false // Set to console.log to see SQL queries
-});
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Load environment variables from .env file
+dotenv.config({ path: path.join(__dirname, '../../.env') });
+
+const sequelize = new Sequelize(
+    process.env.DB_NAME || 'defaultdb',
+    process.env.DB_USER || 'user',
+    process.env.DB_PASSWORD || 'password',
+    {
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '3306'),
+        dialect: 'mysql',
+        dialectOptions: {
+            ssl: {
+                require: true,
+                rejectUnauthorized: false // Permite certificados autofirmados
+            }
+        },
+        logging: false // Set to console.log to see SQL queries
+    }
+);
 
 const connectDatabase = async () => {
     try {
