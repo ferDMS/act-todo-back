@@ -10,8 +10,9 @@ const __dirname = dirname(__filename);
 // Load environment variables from .env file
 dotenv.config({ path: path.join(__dirname, '../../.env') });
 
+// Validate required environment variables
 if (!process.env.DB_NAME || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_HOST || !process.env.DB_PORT) {
-    throw new Error('Missing database configuration. Please check your .env file');
+    throw new Error('Missing required database environment variables. Please check your .env file');
 }
 
 const sequelize = new Sequelize(
