@@ -8,30 +8,30 @@ let todos: Todo[] = [];
 class TodoController {
     async getTodos(req: Request, res: Response) {
         try {
-            res.status(200).json(todos);
+            res.send(todos);
         } catch (error) {
             res.status(500).json({ message: 'Error retrieving todos', error });
         }
     }
 
     async addTodo(req: Request, res: Response) {
-        const { text, priority = 'medium' }: { text: string; priority?: "low" | "medium" | "high" } = req.body;
+        const { id, text, completed, priority, createdAt }: { id?: string; text: string; completed?: boolean; priority?: "low" | "medium" | "high"; createdAt?: string } = req.body;
         
         if (!text) {
             return res.status(400).json({ message: 'Text is required' });
         }
 
         const newTodo: Todo = {
-            id: Date.now().toString(), // Simple ID generation (use UUID in production)
+            id: id || Date.now().toString(), // Use provided ID or generate one
             text,
-            completed: false,
-            priority,
-            createdAt: new Date()
+            completed: completed || false,
+            priority: priority || 'medium',
+            createdAt: createdAt ? new Date(createdAt) : new Date()
         };
 
         try {
             todos.push(newTodo);
-            res.status(201).json(newTodo);
+            res.status(201).send({ message: 'Todo created' });
         } catch (error) {
             res.status(500).json({ message: 'Error adding todo', error });
         }
@@ -39,7 +39,7 @@ class TodoController {
 
     async editTodo(req: Request, res: Response) {
         const { id } = req.params;
-        const updates: Partial<Todo> = req.body;
+        const { text, completed, priority }: Partial<Todo> = req.body;
 
         try {
             const todoIndex = todos.findIndex(todo => todo.id === id);
@@ -47,9 +47,12 @@ class TodoController {
                 return res.status(404).json({ message: 'Todo not found' });
             }
 
-            // Update the todo with new values, keeping existing ones for unspecified fields
-            todos[todoIndex] = { ...todos[todoIndex], ...updates };
-            res.status(200).json(todos[todoIndex]);
+            // Update the todo with new values
+            if (text !== undefined) todos[todoIndex].text = text;
+            if (completed !== undefined) todos[todoIndex].completed = completed;
+            if (priority !== undefined) todos[todoIndex].priority = priority;
+            
+            res.send({ message: 'Todo updated' });
         } catch (error) {
             res.status(500).json({ message: 'Error editing todo', error });
         }
@@ -65,7 +68,7 @@ class TodoController {
             }
 
             todos.splice(todoIndex, 1);
-            res.status(200).json({ message: 'Todo deleted successfully' });
+            res.send({ message: 'Todo deleted' });
         } catch (error) {
             res.status(500).json({ message: 'Error deleting todo', error });
         }
