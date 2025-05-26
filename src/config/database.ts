@@ -1,8 +1,16 @@
-import { Sequelize } from 'sequelize';
+import { Sequelize } from 'sequelize'; 
 
-const sequelize = new Sequelize('database_name', 'username', 'password', {
-    host: 'localhost',
-    dialect: 'postgres', // or 'mysql', 'sqlite', etc.
+const sequelize = new Sequelize('defaultdb', 'avnadmin', 'AVNS_Nom2k4h3t0k7W0LPoj-', {
+    host: 'mysql-336e5ff8-tec-39e5.h.aivencloud.com',
+    port: 22073,
+    dialect: 'mysql',
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: true
+        }
+    },
+    logging: false // Set to console.log to see SQL queries
 });
 
 const connectDatabase = async () => {
